@@ -65,34 +65,41 @@ def generar():
     if not items:
         return 'Ingresa al menos una cantidad mayor a 0', 400
 
-    row = _sb.table('remisiones').insert({
-        'cliente_nombre':    cliente['nombre'],
-        'cliente_nit':       cliente['nit'],
-        'cliente_telefono':  cliente.get('telefono', ''),
-        'cliente_direccion': cliente.get('direccion', ''),
-        'cliente_ciudad':    cliente.get('ciudad', ''),
-        'punto_nombre':      punto['nombre'],
-        'punto_ciudad':      punto['ciudad'],
-        'fecha':             fecha,
-        'items':             items,
-    }).execute().data[0]
+    try:
+        result = _sb.table('remisiones').insert({
+            'cliente_nombre':    cliente['nombre'],
+            'cliente_nit':       cliente['nit'],
+            'cliente_telefono':  cliente.get('telefono', ''),
+            'cliente_direccion': cliente.get('direccion', ''),
+            'cliente_ciudad':    cliente.get('ciudad', ''),
+            'punto_nombre':      punto['nombre'],
+            'punto_ciudad':      punto['ciudad'],
+            'fecha':             fecha,
+            'items':             items,
+        }).execute()
+        row = result.data[0]
+    except Exception as e:
+        return f'Error Supabase: {e}', 500
 
     numero = str(row['id']).zfill(4)
     _sb.table('remisiones').update({'numero': numero}).eq('id', row['id']).execute()
 
-    pdf = generar_pdf({
-        'numero': numero,
-        'fecha':  fecha,
-        'cliente': {
-            'nombre':    cliente['nombre'],
-            'nit':       cliente['nit'],
-            'telefono':  cliente.get('telefono', ''),
-            'direccion': cliente.get('direccion', ''),
-            'ciudad':    cliente.get('ciudad', ''),
-        },
-        'punto': punto,
-        'items': items,
-    })
+    try:
+        pdf = generar_pdf({
+            'numero': numero,
+            'fecha':  fecha,
+            'cliente': {
+                'nombre':    cliente['nombre'],
+                'nit':       cliente['nit'],
+                'telefono':  cliente.get('telefono', ''),
+                'direccion': cliente.get('direccion', ''),
+                'ciudad':    cliente.get('ciudad', ''),
+            },
+            'punto': punto,
+            'items': items,
+        })
+    except Exception as e:
+        return f'Error PDF: {e}', 500
 
     return send_file(pdf, as_attachment=True,
                      download_name=f'remision_{numero}.pdf',

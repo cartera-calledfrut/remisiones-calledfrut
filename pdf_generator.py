@@ -13,7 +13,7 @@ _LOGO = os.path.join(_BASE, 'static', 'logo.png')
 # 18 cm usable width (A4 - 1.5cm margins each side)
 COL_HEADER  = [3.5*cm, 10.0*cm, 4.5*cm]
 COL_CLIENT  = [2.0*cm, 4.5*cm, 2.3*cm, 3.5*cm, 2.7*cm, 3.0*cm]
-COL_ITEMS   = [1.5*cm, 7.0*cm, 2.5*cm, 2.0*cm, 2.5*cm, 2.5*cm]
+COL_ITEMS   = [1.5*cm, 9.5*cm, 2.5*cm, 2.5*cm, 2.0*cm]
 COL_BOTTOM  = [9.5*cm, 5.5*cm, 3.0*cm]
 
 BORDER   = ('BOX',       (0,0), (-1,-1), 0.75, colors.black)
@@ -106,7 +106,6 @@ def generar_pdf(remision):
     items_rows = [[
         _hdr('Ítem',         TA_CENTER),
         _hdr('Descripción'),
-        _hdr('Producto',     TA_CENTER),
         _hdr('Cantidad',     TA_CENTER),
         _hdr('Vr. Bruto',   TA_RIGHT),
         _hdr('Vr. Unitario',TA_RIGHT),
@@ -114,17 +113,16 @@ def generar_pdf(remision):
 
     for i, item in enumerate(remision['items'], 1):
         items_rows.append([
-            _p(str(i),                       align=TA_CENTER),
+            _p(str(i),                           align=TA_CENTER),
             _p(item['descripcion']),
-            _p(item['codigo'],               align=TA_CENTER),
             _p(f'{float(item["cantidad"]):.2f}', align=TA_CENTER),
-            _p('0.00',                       align=TA_RIGHT),
-            _p('0.00',                       align=TA_RIGHT),
+            _p('0.00',                           align=TA_RIGHT),
+            _p('0.00',                           align=TA_RIGHT),
         ])
 
     empty_needed = max(0, 8 - len(remision['items']))
     for _ in range(empty_needed):
-        items_rows.append(['', '', '', '', '', ''])
+        items_rows.append(['', '', '', '', ''])
 
     row_h = [0.65*cm] * len(items_rows)
     items_t = Table(items_rows, colWidths=COL_ITEMS, rowHeights=row_h)
@@ -134,8 +132,7 @@ def generar_pdf(remision):
         ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
         ('ALIGN',  (0,1), (0,-1), 'CENTER'),
         ('ALIGN',  (2,1), (2,-1), 'CENTER'),
-        ('ALIGN',  (3,1), (3,-1), 'CENTER'),
-        ('ALIGN',  (4,0), (5,-1), 'RIGHT'),
+        ('ALIGN',  (3,0), (4,-1), 'RIGHT'),
     ]))
     elements.append(items_t)
 

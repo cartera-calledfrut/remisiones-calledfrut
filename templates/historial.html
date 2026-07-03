@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Historial{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-bold mb-0">Historial de Remisiones</h4>
+  <a href="/" class="btn btn-primary">+ Nueva remisión</a>
+</div>
+
+{% if remisiones %}
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>No.</th>
+        <th>Fecha</th>
+        <th>Cliente</th>
+        <th>Punto de entrega</th>
+        <th>Ítems</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in remisiones %}
+      <tr>
+        <td class="fw-bold text-muted">{{ r.numero }}</td>
+        <td>{{ r.fecha }}</td>
+        <td>{{ r.cliente_nombre }}</td>
+        <td>{{ r.punto_nombre }}</td>
+        <td>
+          {% for item in r.items %}
+            <span class="badge bg-light text-dark border me-1">
+              {{ item.descripcion }} × {{ item.cantidad | int }}
+            </span>
+          {% endfor %}
+        </td>
+        <td class="text-end">
+          <a href="/remision/{{ r.id }}/pdf" class="btn btn-sm btn-outline-secondary">
+            Descargar PDF
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="text-center text-muted py-5">
+  <p class="fs-5">Aún no hay remisiones registradas.</p>
+  <a href="/" class="btn btn-primary">Crear la primera</a>
+</div>
+{% endif %}
+{% endblock %}

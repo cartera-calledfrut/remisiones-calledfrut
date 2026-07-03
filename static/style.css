@@ -1,0 +1,47 @@
+:root {
+  --brand: #2d6a2d;
+}
+
+body {
+  background: #f5f6f8;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.navbar {
+  background: var(--brand);
+}
+
+.btn-primary {
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background: #235223;
+  border-color: #235223;
+}
+
+.card {
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+
+.card-title {
+  font-size: .75rem;
+  letter-spacing: .07em;
+  font-weight: 600;
+}
+
+.form-select,
+.form-control {
+  border-radius: 6px;
+}
+
+table thead th {
+  font-size: .8rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: #666;
+}

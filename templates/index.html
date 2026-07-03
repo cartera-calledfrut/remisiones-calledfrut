@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Nueva Remisión{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7">
+
+    <h4 class="mb-4 fw-bold">Nueva Remisión</h4>
+
+    <div id="alert-box" class="alert alert-danger d-none" role="alert"></div>
+
+    <form id="form-remision" method="POST" action="/generar">
+
+      <!-- Cliente -->
+      <div class="card mb-3">
+        <div class="card-body">
+          <h6 class="card-title text-muted mb-3">CLIENTE</h6>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Razón social</label>
+            <select name="cliente_id" id="sel-cliente" class="form-select" required>
+              <option value="">— Selecciona un cliente —</option>
+              {% for c in clientes %}
+              <option value="{{ c.id }}">{{ c.nombre }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-1">
+            <label class="form-label fw-semibold">Punto de entrega</label>
+            <select name="punto" id="sel-punto" class="form-select" required disabled>
+              <option value="">— Primero selecciona un cliente —</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fecha -->
+      <div class="card mb-3">
+        <div class="card-body">
+          <h6 class="card-title text-muted mb-3">FECHA</h6>
+          <input type="date" name="fecha" class="form-control" value="{{ hoy }}" required>
+        </div>
+      </div>
+
+      <!-- Productos -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <h6 class="card-title text-muted mb-3">CANTIDADES</h6>
+          <p class="text-muted small mb-3">Deja en 0 los productos que no van en esta remisión.</p>
+
+          {% for prod in productos %}
+          <div class="row align-items-center mb-3">
+            <div class="col-8">
+              <label class="form-label fw-semibold mb-0">{{ prod.descripcion }}</label>
+              <div class="text-muted small">Código: {{ prod.codigo }}</div>
+            </div>
+            <div class="col-4">
+              <input
+                type="number"
+                name="qty_{{ prod.codigo }}"
+                class="form-control text-end"
+                value="0"
+                min="0"
+                step="1"
+                placeholder="0"
+              >
+            </div>
+          </div>
+          {% if not loop.last %}<hr class="my-2">{% endif %}
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="d-grid">
+        <button type="submit" id="btn-generar" class="btn btn-primary btn-lg">
+          Generar PDF
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const selCliente = document.getElementById('sel-cliente');
+const selPunto   = document.getElementById('sel-punto');
+const alertBox   = document.getElementById('alert-box');
+const form       = document.getElementById('form-remision');
+const btnGenerar = document.getElementById('btn-generar');
+
+selCliente.addEventListener('change', async () => {
+  const cid = selCliente.value;
+  selPunto.innerHTML = '<option value="">Cargando...</option>';
+  selPunto.disabled = true;
+
+  if (!cid) {
+    selPunto.innerHTML = '<option value="">— Primero selecciona un cliente —</option>';
+    return;
+  }
+
+  const res  = await fetch(`/api/puntos?cliente_id=${cid}`);
+  const data = await res.json();
+
+  selPunto.innerHTML = '<option value="">— Selecciona un punto —</option>';
+  data.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.nombre;
+    opt.textContent = p.nombre;
+    selPunto.appendChild(opt);
+  });
+  selPunto.disabled = false;
+});
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  alertBox.classList.add('d-none');
+  btnGenerar.disabled = true;
+  btnGenerar.textContent = 'Generando...';
+
+  try {
+    const res = await fetch('/generar', { method: 'POST', body: new FormData(form) });
+
+    if (!res.ok) {
+      const msg = await res.text();
+      alertBox.textContent = msg;
+      alertBox.classList.remove('d-none');
+      return;
+    }
+
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const cd   = res.headers.get('Content-Disposition') || '';
+    const match = cd.match(/filename="?([^"]+)"?/);
+    a.download = match ? match[1] : 'remision.pdf';
+    a.href = url;
+    a.click();
+    URL.revokeObjectURL(url);
+  } finally {
+    btnGenerar.disabled = false;
+    btnGenerar.textContent = 'Generar PDF';
+  }
+});
+</script>
+{% endblock %}

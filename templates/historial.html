@@ -28,7 +28,7 @@
         <td>{{ r.cliente_nombre }}</td>
         <td>{{ r.punto_nombre }}</td>
         <td>
-          {% for item in r.items %}
+          {% for item in r['items'] %}
             <span class="badge bg-light text-dark border me-1">
               {{ item.descripcion }} × {{ item.cantidad | int }}
             </span>

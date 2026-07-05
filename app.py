@@ -108,8 +108,14 @@ def generar():
 
 @app.route('/historial')
 def historial():
-    rows = _sb.table('remisiones').select('*').order('id', desc=True).execute().data
-    return render_template('historial.html', remisiones=rows)
+    try:
+        rows = _sb.table('remisiones').select('*').order('id', desc=True).execute().data
+    except Exception as e:
+        return f'Error historial Supabase: {e}', 500
+    try:
+        return render_template('historial.html', remisiones=rows)
+    except Exception as e:
+        return f'Error historial template: {e} — datos: {rows}', 500
 
 
 @app.route('/remision/<int:rid>/pdf')

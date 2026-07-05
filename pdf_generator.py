@@ -8,12 +8,12 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image, HRFlowable
 
-# ── Colores ───────────────────────────────────────────────────────────────────
+# ── Colores (escala de grises) ────────────────────────────────────────────────
 DARK    = colors.HexColor('#1a1a1a')
-GRAY    = colors.HexColor('#666666')
-LGRAY   = colors.HexColor('#f4f4f4')
-BORDER  = colors.HexColor('#cccccc')
-ACCENT  = colors.HexColor('#2d6a2d')
+GRAY    = colors.HexColor('#555555')
+LGRAY   = colors.HexColor('#f0f0f0')
+BORDER  = colors.HexColor('#aaaaaa')
+ACCENT  = colors.HexColor('#333333')
 WHITE   = colors.white
 
 # ── Anchos de columna (total = 18 cm) ────────────────────────────────────────
@@ -83,16 +83,17 @@ def generar_pdf(remision):
     )
 
     remision_box = _tbl(
-        [[_p('REMISIÓN', size=9, bold=True, align=TA_CENTER, color=WHITE)],
-         [_p(f'No. {remision["numero"]}', size=13, bold=True, align=TA_CENTER, color=WHITE)]],
-        [4.5*cm],
-        [('BACKGROUND', (0,0), (-1,-1), ACCENT),
-         ('ROWBACKGROUNDS', (0,0), (-1,-1), [ACCENT, ACCENT])],
+        [[_p('REMISIÓN', size=8, bold=True, align=TA_CENTER, color=WHITE)],
+         [_p(f'No. {remision["numero"]}', size=11, bold=True, align=TA_CENTER, color=WHITE)]],
+        [4.3*cm],
+        [('BACKGROUND',    (0,0), (-1,-1), ACCENT),
+         ('TOPPADDING',    (0,0), (-1,-1), 8),
+         ('BOTTOMPADDING', (0,0), (-1,-1), 8)],
     )
 
     header = _tbl(
         [[logo, Paragraph(empresa_txt, _s(8.5)), remision_box]],
-        [3.5*cm, 10*cm, 4.5*cm],
+        [3.5*cm, 10.2*cm, 4.3*cm],
         [('BOX',      (0,0), (-1,-1), 1, BORDER),
          ('LINEBEFORE',(1,0),(1,0),   0.5, BORDER),
          ('LINEBEFORE',(2,0),(2,0),   0.5, BORDER),
@@ -160,7 +161,7 @@ def generar_pdf(remision):
         ('BOX',           (0,0), (-1,-1), 1,    BORDER),
         ('INNERGRID',     (0,0), (-1,-1), 0.25, BORDER),
         ('BACKGROUND',    (0,0), (-1,0),  ACCENT),
-        ('ROWBACKGROUNDS',(0,1), (-1,-1), [WHITE, LGRAY]),
+        ('ROWBACKGROUNDS',(0,1), (-1,-1), [WHITE, colors.HexColor('#f8f8f8')]),
         ('ALIGN',         (0,1), (0,-1),  'CENTER'),
         ('ALIGN',         (2,1), (2,-1),  'CENTER'),
         ('ALIGN',         (3,0), (4,-1),  'RIGHT'),

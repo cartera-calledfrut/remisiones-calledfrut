@@ -173,13 +173,22 @@ def generar_pdf(remision):
     elements.append(items_t)
     elements.append(Spacer(1, 0.3*cm))
 
-    # ── OBSERVACIONES + TOTALES ───────────────────────────────────────────────
+    # ── PUNTO DE ENTREGA + OBSERVACIONES + TOTALES ───────────────────────────
+    obs_rows = [
+        [lbl('PUNTO DE ENTREGA')],
+        [_p(punto['nombre'], size=9, bold=True)],
+    ]
+    observaciones = remision.get('observaciones', '').strip()
+    if observaciones:
+        obs_rows.append([lbl('OBSERVACIONES')])
+        obs_rows.append([_p(observaciones, size=8.5)])
+
     obs_t = _tbl(
-        [[lbl('PUNTO DE ENTREGA')],
-         [_p(punto['nombre'], size=9, bold=True)]],
+        obs_rows,
         [10*cm],
         [('BOX', (0,0), (-1,-1), 1, BORDER),
-         ('BACKGROUND', (0,0), (-1,0), LGRAY)],
+         ('BACKGROUND', (0,0), (-1,0), LGRAY),
+         ('BACKGROUND', (0,2), (-1,2), LGRAY)],
     )
     tot_t = _tbl(
         [[_p('Total Bruto',   bold=True, size=8.5), _p('0.00', align=TA_RIGHT, size=8.5)],

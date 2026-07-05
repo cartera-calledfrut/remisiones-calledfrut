@@ -69,6 +69,8 @@ def generar():
     if not empresa or not cliente or not punto:
         return 'Selecciona empresa, cliente y punto de entrega', 400
 
+    observaciones = request.form.get('observaciones', '').strip()
+
     items = []
     for prod in PRODUCTOS:
         raw = request.form.get(f'qty_{prod["codigo"]}', '0').strip()
@@ -104,7 +106,8 @@ def generar():
     try:
         pdf = generar_pdf({'numero': numero, 'fecha': fecha,
                            'empresa': empresa, 'cliente': cliente,
-                           'punto': punto, 'items': items})
+                           'punto': punto, 'items': items,
+                           'observaciones': observaciones})
     except Exception as e:
         return f'Error PDF: {e}', 500
 

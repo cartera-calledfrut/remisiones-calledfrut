@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Configuración{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-bold mb-0">Razones Sociales</h4>
+  <a href="/configuracion/nueva" class="btn btn-primary">+ Nueva empresa</a>
+</div>
+
+{% if empresas %}
+<div class="row g-4">
+  {% for e in empresas %}
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-body">
+        {% if e.logo_base64 %}
+        <img src="data:image/png;base64,{{ e.logo_base64 }}"
+             style="max-height:60px; max-width:160px; object-fit:contain;" class="mb-3 d-block">
+        {% endif %}
+        <h5 class="fw-bold mb-1">{{ e.nombre }}</h5>
+        <p class="text-muted small mb-2">NIT {{ e.nit }}</p>
+        <ul class="list-unstyled small text-muted mb-3">
+          {% if e.direccion %}<li>📍 {{ e.direccion }}{% if e.ciudad %}, {{ e.ciudad }}{% endif %}</li>{% endif %}
+          {% if e.telefono %}<li>📞 {{ e.telefono }}</li>{% endif %}
+          {% if e.email    %}<li>✉️ {{ e.email }}</li>{% endif %}
+        </ul>
+        <a href="/configuracion/{{ e.id }}" class="btn btn-sm btn-outline-secondary">Editar</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="text-center text-muted py-5">
+  <p class="fs-5">No hay empresas configuradas.</p>
+  <a href="/configuracion/nueva" class="btn btn-primary">Crear la primera</a>
+</div>
+{% endif %}
+{% endblock %}

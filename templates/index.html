@@ -4,18 +4,29 @@
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-md-7">
-
     <h4 class="mb-4 fw-bold">Nueva Remisión</h4>
 
-    <div id="alert-box" class="alert alert-danger d-none" role="alert"></div>
+    <div id="alert-box" class="alert alert-danger d-none"></div>
 
     <form id="form-remision" method="POST" action="/generar">
 
-      <!-- Cliente -->
+      <!-- Razón social emisora -->
+      <div class="card mb-3">
+        <div class="card-body">
+          <h6 class="card-title text-muted mb-3">EMITIDA POR</h6>
+          <select name="empresa_id" class="form-select" required>
+            <option value="">— Selecciona razón social —</option>
+            {% for e in empresas %}
+            <option value="{{ e.id }}">{{ e.nombre }} · NIT {{ e.nit }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- Cliente y punto -->
       <div class="card mb-3">
         <div class="card-body">
           <h6 class="card-title text-muted mb-3">CLIENTE</h6>
-
           <div class="mb-3">
             <label class="form-label fw-semibold">Razón social</label>
             <select name="cliente_id" id="sel-cliente" class="form-select" required>
@@ -25,10 +36,9 @@
               {% endfor %}
             </select>
           </div>
-
           <div class="mb-1">
             <label class="form-label fw-semibold">Punto de entrega</label>
-            <select name="punto" id="sel-punto" class="form-select" required disabled>
+            <select name="punto_id" id="sel-punto" class="form-select" required disabled>
               <option value="">— Primero selecciona un cliente —</option>
             </select>
           </div>
@@ -43,27 +53,19 @@
         </div>
       </div>
 
-      <!-- Productos -->
+      <!-- Cantidades -->
       <div class="card mb-4">
         <div class="card-body">
           <h6 class="card-title text-muted mb-3">CANTIDADES</h6>
           <p class="text-muted small mb-3">Deja en 0 los productos que no van en esta remisión.</p>
-
           {% for prod in productos %}
           <div class="row align-items-center mb-3">
             <div class="col-8">
               <label class="form-label fw-semibold mb-0">{{ prod.descripcion }}</label>
             </div>
             <div class="col-4">
-              <input
-                type="number"
-                name="qty_{{ prod.codigo }}"
-                class="form-control text-end"
-                value="0"
-                min="0"
-                step="1"
-                placeholder="0"
-              >
+              <input type="number" name="qty_{{ prod.codigo }}"
+                     class="form-control text-end" value="0" min="0" step="1">
             </div>
           </div>
           {% if not loop.last %}<hr class="my-2">{% endif %}
@@ -76,7 +78,6 @@
           Generar PDF
         </button>
       </div>
-
     </form>
   </div>
 </div>
@@ -88,59 +89,43 @@ const selCliente = document.getElementById('sel-cliente');
 const selPunto   = document.getElementById('sel-punto');
 const alertBox   = document.getElementById('alert-box');
 const form       = document.getElementById('form-remision');
-const btnGenerar = document.getElementById('btn-generar');
+const btn        = document.getElementById('btn-generar');
 
 selCliente.addEventListener('change', async () => {
   const cid = selCliente.value;
-  selPunto.innerHTML = '<option value="">Cargando...</option>';
+  selPunto.innerHTML = '<option>Cargando...</option>';
   selPunto.disabled = true;
-
-  if (!cid) {
-    selPunto.innerHTML = '<option value="">— Primero selecciona un cliente —</option>';
-    return;
-  }
-
-  const res  = await fetch(`/api/puntos?cliente_id=${cid}`);
-  const data = await res.json();
-
+  if (!cid) { selPunto.innerHTML = '<option value="">— Primero selecciona un cliente —</option>'; return; }
+  const puntos = await fetch(`/api/puntos?cliente_id=${cid}`).then(r => r.json());
   selPunto.innerHTML = '<option value="">— Selecciona un punto —</option>';
-  data.forEach(p => {
-    const opt = document.createElement('option');
-    opt.value = p.nombre;
-    opt.textContent = p.nombre;
-    selPunto.appendChild(opt);
+  puntos.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p.id;
+    o.textContent = p.nombre;
+    selPunto.appendChild(o);
   });
   selPunto.disabled = false;
 });
 
-form.addEventListener('submit', async (e) => {
+form.addEventListener('submit', async e => {
   e.preventDefault();
   alertBox.classList.add('d-none');
-  btnGenerar.disabled = true;
-  btnGenerar.textContent = 'Generando...';
-
+  btn.disabled = true;
+  btn.textContent = 'Generando...';
   try {
     const res = await fetch('/generar', { method: 'POST', body: new FormData(form) });
-
-    if (!res.ok) {
-      const msg = await res.text();
-      alertBox.textContent = msg;
-      alertBox.classList.remove('d-none');
-      return;
-    }
-
+    if (!res.ok) { alertBox.textContent = await res.text(); alertBox.classList.remove('d-none'); return; }
     const blob = await res.blob();
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     const cd   = res.headers.get('Content-Disposition') || '';
-    const match = cd.match(/filename="?([^"]+)"?/);
-    a.download = match ? match[1] : 'remision.pdf';
-    a.href = url;
-    a.click();
+    const m    = cd.match(/filename="?([^"]+)"?/);
+    a.download = m ? m[1] : 'remision.pdf';
+    a.href = url; a.click();
     URL.revokeObjectURL(url);
   } finally {
-    btnGenerar.disabled = false;
-    btnGenerar.textContent = 'Generar PDF';
+    btn.disabled = false;
+    btn.textContent = 'Generar PDF';
   }
 });
 </script>

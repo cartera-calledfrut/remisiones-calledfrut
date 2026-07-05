@@ -1,167 +1,212 @@
+import io
+import os
+import base64
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.units import cm
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
-import io
-import os
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image, HRFlowable
 
-_BASE = os.path.dirname(__file__)
-_LOGO = os.path.join(_BASE, 'static', 'logo.png')
+# ── Colores ───────────────────────────────────────────────────────────────────
+DARK    = colors.HexColor('#1a1a1a')
+GRAY    = colors.HexColor('#666666')
+LGRAY   = colors.HexColor('#f4f4f4')
+BORDER  = colors.HexColor('#cccccc')
+ACCENT  = colors.HexColor('#2d6a2d')
+WHITE   = colors.white
 
-# 18 cm usable width (A4 - 1.5cm margins each side)
-COL_HEADER  = [3.5*cm, 10.0*cm, 4.5*cm]
-COL_CLIENT  = [2.0*cm, 4.5*cm, 2.3*cm, 3.5*cm, 2.7*cm, 3.0*cm]
-COL_ITEMS   = [1.5*cm, 9.5*cm, 2.5*cm, 2.5*cm, 2.0*cm]
-COL_BOTTOM  = [9.5*cm, 5.5*cm, 3.0*cm]
+# ── Anchos de columna (total = 18 cm) ────────────────────────────────────────
+COL_CLIENT = [2.2*cm, 5.3*cm, 2.2*cm, 8.3*cm]
+COL_ITEMS  = [1.2*cm, 11.3*cm, 2.0*cm, 1.75*cm, 1.75*cm]
+COL_BOT    = [10*cm, 8*cm]
+COL_TOT    = [5.5*cm, 2.5*cm]
 
-BORDER   = ('BOX',       (0,0), (-1,-1), 0.75, colors.black)
-GRID     = ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black)
-VMID     = ('VALIGN',    (0,0), (-1,-1), 'MIDDLE')
-PAD4     = [('TOPPADDING',(0,0),(-1,-1),4), ('BOTTOMPADDING',(0,0),(-1,-1),4),
-            ('LEFTPADDING',(0,0),(-1,-1),4), ('RIGHTPADDING',(0,0),(-1,-1),4)]
 
-def _s(size=8, bold=False, align=TA_LEFT):
-    return ParagraphStyle(
-        'x', fontSize=size, leading=size*1.35,
-        fontName='Helvetica-Bold' if bold else 'Helvetica',
-        alignment=align,
-    )
+def _s(size=8.5, bold=False, align=TA_LEFT, color=DARK):
+    return ParagraphStyle('x', fontSize=size, leading=size * 1.4,
+                          fontName='Helvetica-Bold' if bold else 'Helvetica',
+                          alignment=align, textColor=color)
 
-def _p(text, size=8, bold=False, align=TA_LEFT):
-    return Paragraph(str(text), _s(size, bold, align))
+def _p(text, **kw):
+    return Paragraph(str(text) if text else '', _s(**kw))
 
-def _table(data, cols, style_cmds):
+def _tbl(data, cols, cmds):
     t = Table(data, colWidths=cols)
-    t.setStyle(TableStyle([VMID] + PAD4 + style_cmds))
+    t.setStyle(TableStyle([
+        ('VALIGN',       (0,0), (-1,-1), 'MIDDLE'),
+        ('TOPPADDING',   (0,0), (-1,-1), 5),
+        ('BOTTOMPADDING',(0,0), (-1,-1), 5),
+        ('LEFTPADDING',  (0,0), (-1,-1), 6),
+        ('RIGHTPADDING', (0,0), (-1,-1), 6),
+    ] + cmds))
     return t
+
+
+def _logo_image(empresa):
+    b64 = empresa.get('logo_base64', '')
+    if b64:
+        try:
+            data = base64.b64decode(b64)
+            return Image(io.BytesIO(data), width=3.2*cm, height=2.6*cm, kind='proportional')
+        except Exception:
+            pass
+    local = os.path.join(os.path.dirname(__file__), 'static', 'logo.png')
+    if os.path.exists(local):
+        return Image(local, width=3.2*cm, height=2.6*cm, kind='proportional')
+    return _p('')
 
 
 def generar_pdf(remision):
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(
-        buffer, pagesize=A4,
-        leftMargin=1.5*cm, rightMargin=1.5*cm,
-        topMargin=1.5*cm,  bottomMargin=1.5*cm,
-        title=f'Remision {remision["numero"]}',
-    )
+    doc = SimpleDocTemplate(buffer, pagesize=A4,
+                            leftMargin=1.5*cm, rightMargin=1.5*cm,
+                            topMargin=1.5*cm,  bottomMargin=1.5*cm,
+                            title=f'Remision {remision["numero"]}')
 
+    empresa = remision.get('empresa', {})
+    cliente = remision['cliente']
+    punto   = remision['punto']
+    items   = remision['items']
     elements = []
-    cl = remision['cliente']
-    pt = remision['punto']
 
-    # ── HEADER ──────────────────────────────────────────────────────────────
-    logo = (Image(_LOGO, width=3.0*cm, height=2.5*cm)
-            if os.path.exists(_LOGO) else _p(''))
+    # ── ENCABEZADO ────────────────────────────────────────────────────────────
+    logo = _logo_image(empresa)
 
-    empresa = (
-        '<b>Sierra Viva SAS</b><br/>'
-        'NIT 901.321.715-3<br/>'
-        'Cra 27 20 Sur 101<br/>'
-        'Tel: (3194839769)<br/>'
-        'Medellín - Colombia<br/>'
-        'cartera@calledfrut.co'
+    empresa_txt = (
+        f'<b>{empresa.get("nombre","")}</b><br/>'
+        f'NIT {empresa.get("nit","")}<br/>'
+        f'{empresa.get("direccion","")}<br/>'
+        f'Tel: {empresa.get("telefono","")}<br/>'
+        f'{empresa.get("ciudad","")}<br/>'
+        f'{empresa.get("email","")}'
     )
 
-    remision_box = _table(
-        [[_p('Remisión', size=10, bold=True, align=TA_CENTER)],
-         [_p(f'No. {remision["numero"]}', size=11, bold=True, align=TA_CENTER)]],
+    remision_box = _tbl(
+        [[_p('REMISIÓN', size=9, bold=True, align=TA_CENTER, color=WHITE)],
+         [_p(f'No. {remision["numero"]}', size=13, bold=True, align=TA_CENTER, color=WHITE)]],
         [4.5*cm],
-        [BORDER, ('ALIGN',(0,0),(-1,-1),'CENTER')],
+        [('BACKGROUND', (0,0), (-1,-1), ACCENT),
+         ('ROWBACKGROUNDS', (0,0), (-1,-1), [ACCENT, ACCENT])],
     )
 
-    header = _table(
-        [[logo, Paragraph(empresa, _s(8)), remision_box]],
-        COL_HEADER,
-        [BORDER,
-         ('LINEAFTER', (0,0), (0,0), 0.75, colors.black),
-         ('LINEAFTER', (1,0), (1,0), 0.75, colors.black),
-         ('ALIGN',  (0,0), (0,0), 'CENTER'),
-         ('LEFTPADDING', (1,0), (1,0), 8)],
+    header = _tbl(
+        [[logo, Paragraph(empresa_txt, _s(8.5)), remision_box]],
+        [3.5*cm, 10*cm, 4.5*cm],
+        [('BOX',      (0,0), (-1,-1), 1, BORDER),
+         ('LINEBEFORE',(1,0),(1,0),   0.5, BORDER),
+         ('LINEBEFORE',(2,0),(2,0),   0.5, BORDER),
+         ('BACKGROUND',(0,0),(1,0),   LGRAY),
+         ('ALIGN',    (0,0),(0,0),    'CENTER'),
+         ('LEFTPADDING',(1,0),(1,0),  10)],
     )
     elements.append(header)
+    elements.append(Spacer(1, 0.3*cm))
 
-    # ── CLIENT INFO ──────────────────────────────────────────────────────────
-    client_data = [
-        [_p('Señores', bold=True), _p(cl['nombre']), '', '',
-         _p('Fecha Elaboración', bold=True), _p(remision['fecha'])],
-        [_p('NIT', bold=True), _p(cl['nit']),
-         _p('Teléfono', bold=True), _p(cl.get('telefono', '')), '', ''],
-        [_p('Dirección', bold=True), _p(cl.get('direccion', '')),
-         _p('Ciudad', bold=True), _p(pt['ciudad']), '', ''],
+    # ── DATOS DEL CLIENTE ─────────────────────────────────────────────────────
+    def lbl(txt): return _p(txt, bold=True, size=7.5, color=GRAY)
+    def val(txt): return _p(txt, size=8.5)
+
+    client_rows = [
+        [lbl('SEÑORES'),   val(cliente.get('nombre','')),
+         lbl('FECHA'),     val(remision['fecha'])],
+        [lbl('NIT'),       val(cliente.get('nit','')),
+         lbl('TELÉFONO'),  val(cliente.get('telefono',''))],
+        [lbl('DIRECCIÓN'), val(cliente.get('direccion','')),
+         lbl('CIUDAD'),    val(punto['ciudad'])],
     ]
-    client_t = _table(client_data, COL_CLIENT, [
-        BORDER, GRID,
-        ('SPAN', (1,0), (3,0)),
-        ('SPAN', (4,1), (5,1)),
-        ('SPAN', (4,2), (5,2)),
+    client_t = _tbl(client_rows, COL_CLIENT, [
+        ('BOX',       (0,0), (-1,-1), 1,    BORDER),
+        ('INNERGRID', (0,0), (-1,-1), 0.25, BORDER),
+        ('BACKGROUND',(0,0), (0,-1),  LGRAY),
+        ('BACKGROUND',(2,0), (2,-1),  LGRAY),
     ])
     elements.append(client_t)
+    elements.append(Spacer(1, 0.3*cm))
 
-    # ── ITEMS TABLE ──────────────────────────────────────────────────────────
-    def _hdr(txt, align=TA_LEFT):
-        return _p(txt, bold=True, align=align)
+    # ── TABLA DE ÍTEMS ────────────────────────────────────────────────────────
+    hdr_style = _s(8, bold=True, align=TA_CENTER, color=WHITE)
+    def hdr(t, align=TA_CENTER): return Paragraph(t, _s(8, bold=True, align=align, color=WHITE))
 
-    items_rows = [[
-        _hdr('Ítem',         TA_CENTER),
-        _hdr('Descripción'),
-        _hdr('Cantidad',     TA_CENTER),
-        _hdr('Vr. Bruto',   TA_RIGHT),
-        _hdr('Vr. Unitario',TA_RIGHT),
+    rows = [[
+        hdr('Ítem'),
+        hdr('Descripción', TA_LEFT),
+        hdr('Cantidad'),
+        hdr('Vr. Bruto', TA_RIGHT),
+        hdr('Vr. Unit.', TA_RIGHT),
     ]]
 
-    for i, item in enumerate(remision['items'], 1):
-        items_rows.append([
-            _p(str(i),                           align=TA_CENTER),
-            _p(item['descripcion']),
-            _p(f'{float(item["cantidad"]):.2f}', align=TA_CENTER),
-            _p('0.00',                           align=TA_RIGHT),
-            _p('0.00',                           align=TA_RIGHT),
+    for i, item in enumerate(items, 1):
+        rows.append([
+            _p(str(i),                           align=TA_CENTER, size=8.5),
+            _p(item['descripcion'],               size=8.5),
+            _p(f'{float(item["cantidad"]):.2f}',  align=TA_CENTER, size=8.5),
+            _p('0.00',                            align=TA_RIGHT, size=8.5),
+            _p('0.00',                            align=TA_RIGHT, size=8.5),
         ])
 
-    empty_needed = max(0, 8 - len(remision['items']))
-    for _ in range(empty_needed):
-        items_rows.append(['', '', '', '', ''])
+    empty = max(0, 7 - len(items))
+    for _ in range(empty):
+        rows.append([_p(''), _p(''), _p(''), _p(''), _p('')])
 
-    row_h = [0.65*cm] * len(items_rows)
-    items_t = Table(items_rows, colWidths=COL_ITEMS, rowHeights=row_h)
+    row_h = [0.7*cm] + [0.65*cm] * (len(rows) - 1)
+    items_t = Table(rows, colWidths=COL_ITEMS, rowHeights=row_h)
     items_t.setStyle(TableStyle([
-        VMID, BORDER, GRID,
-        *PAD4,
-        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-        ('ALIGN',  (0,1), (0,-1), 'CENTER'),
-        ('ALIGN',  (2,1), (2,-1), 'CENTER'),
-        ('ALIGN',  (3,0), (4,-1), 'RIGHT'),
+        ('VALIGN',        (0,0), (-1,-1), 'MIDDLE'),
+        ('TOPPADDING',    (0,0), (-1,-1), 4),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+        ('LEFTPADDING',   (0,0), (-1,-1), 6),
+        ('RIGHTPADDING',  (0,0), (-1,-1), 6),
+        ('BOX',           (0,0), (-1,-1), 1,    BORDER),
+        ('INNERGRID',     (0,0), (-1,-1), 0.25, BORDER),
+        ('BACKGROUND',    (0,0), (-1,0),  ACCENT),
+        ('ROWBACKGROUNDS',(0,1), (-1,-1), [WHITE, LGRAY]),
+        ('ALIGN',         (0,1), (0,-1),  'CENTER'),
+        ('ALIGN',         (2,1), (2,-1),  'CENTER'),
+        ('ALIGN',         (3,0), (4,-1),  'RIGHT'),
     ]))
     elements.append(items_t)
+    elements.append(Spacer(1, 0.3*cm))
 
-    # ── OBSERVACIONES + TOTALES ──────────────────────────────────────────────
-    obs_t = _table(
-        [[_p('Observaciones:', bold=True)],
-         [_p(pt['nombre'])]],
-        [9.5*cm],
-        [BORDER],
+    # ── OBSERVACIONES + TOTALES ───────────────────────────────────────────────
+    obs_t = _tbl(
+        [[lbl('PUNTO DE ENTREGA')],
+         [_p(punto['nombre'], size=9, bold=True)]],
+        [10*cm],
+        [('BOX', (0,0), (-1,-1), 1, BORDER),
+         ('BACKGROUND', (0,0), (-1,0), LGRAY)],
     )
-    totales_t = _table(
-        [[_p('Total Bruto',   bold=True), _p('0.00', align=TA_RIGHT)],
-         [_p('Total a Pagar', bold=True), _p('0.00', align=TA_RIGHT)]],
-        [5.5*cm, 3.0*cm],
-        [BORDER, GRID, ('ALIGN',(1,0),(1,-1),'RIGHT')],
+    tot_t = _tbl(
+        [[_p('Total Bruto',   bold=True, size=8.5), _p('0.00', align=TA_RIGHT, size=8.5)],
+         [_p('Total a Pagar', bold=True, size=8.5), _p('0.00', align=TA_RIGHT, size=8.5)]],
+        COL_TOT,
+        [('BOX',       (0,0), (-1,-1), 1,    BORDER),
+         ('INNERGRID', (0,0), (-1,-1), 0.25, BORDER),
+         ('ALIGN',     (1,0), (1,-1),  'RIGHT'),
+         ('BACKGROUND',(0,1), (0,1),   LGRAY)],
     )
-    bottom = Table([[obs_t, totales_t]], colWidths=[9.5*cm, 8.5*cm])
-    bottom.setStyle(TableStyle([VMID, ('ALIGN',(0,0),(-1,-1),'LEFT')]))
+    bottom = Table([[obs_t, tot_t]], colWidths=COL_BOT)
+    bottom.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'TOP'),
+                                ('RIGHTPADDING',(0,0),(0,-1),8)]))
     elements.append(bottom)
 
-    elements.append(Spacer(1, 1.8*cm))
+    elements.append(Spacer(1, 2*cm))
 
-    # ── SIGNATURES ───────────────────────────────────────────────────────────
-    sig_t = Table(
-        [[_p('Entregado\npor:'), _p('_' * 48), _p(''), _p('Recibido\npor:'), _p('_' * 48)]],
-        colWidths=[2.0*cm, 6.0*cm, 0.5*cm, 2.0*cm, 7.5*cm],
+    # ── FIRMAS ────────────────────────────────────────────────────────────────
+    line = colors.HexColor('#aaaaaa')
+    sig = Table(
+        [[_p('Entregado por:', size=8, color=GRAY), _p(''),
+          _p('Recibido por:',  size=8, color=GRAY), _p('')]],
+        colWidths=[2.5*cm, 6.5*cm, 2.5*cm, 6.5*cm],
     )
-    sig_t.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'BOTTOM')]))
-    elements.append(sig_t)
+    sig.setStyle(TableStyle([
+        ('VALIGN',         (0,0), (-1,-1), 'BOTTOM'),
+        ('LINEBELOW',      (1,0), (1,0),   0.75, line),
+        ('LINEBELOW',      (3,0), (3,0),   0.75, line),
+        ('TOPPADDING',     (0,0), (-1,-1), 14),
+        ('BOTTOMPADDING',  (0,0), (-1,-1), 2),
+    ]))
+    elements.append(sig)
 
     doc.build(elements)
     buffer.seek(0)

@@ -94,12 +94,16 @@ def generar_pdf(remision):
     header = _tbl(
         [[logo, Paragraph(empresa_txt, _s(8.5)), remision_box]],
         [3.5*cm, 10.2*cm, 4.3*cm],
-        [('BOX',      (0,0), (-1,-1), 1, BORDER),
-         ('LINEBEFORE',(1,0),(1,0),   0.5, BORDER),
-         ('LINEBEFORE',(2,0),(2,0),   0.5, BORDER),
-         ('BACKGROUND',(0,0),(1,0),   LGRAY),
-         ('ALIGN',    (0,0),(0,0),    'CENTER'),
-         ('LEFTPADDING',(1,0),(1,0),  10)],
+        [('BOX',           (0,0), (-1,-1), 1,   BORDER),
+         ('LINEBEFORE',    (1,0), (1,0),   0.5, BORDER),
+         ('LINEBEFORE',    (2,0), (2,0),   0.5, BORDER),
+         ('BACKGROUND',    (0,0), (1,0),   LGRAY),
+         ('ALIGN',         (0,0), (0,0),   'CENTER'),
+         ('LEFTPADDING',   (1,0), (1,0),   10),
+         ('LEFTPADDING',   (2,0), (2,0),   0),
+         ('RIGHTPADDING',  (2,0), (2,0),   0),
+         ('TOPPADDING',    (2,0), (2,0),   0),
+         ('BOTTOMPADDING', (2,0), (2,0),   0)],
     )
     elements.append(header)
     elements.append(Spacer(1, 0.3*cm))

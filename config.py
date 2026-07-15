@@ -10,6 +10,7 @@ EMPRESA = {
 PRODUCTOS = [
     {'codigo': 'M016', 'descripcion': 'ZARZAMORA FRESCA 125g'},
     {'codigo': 'M017', 'descripcion': 'ZARZAMORA FRESCA 250g'},
+    {'codigo': 'M018', 'descripcion': 'BLISS BITES KG'},
 ]
 
 CLIENTES = [

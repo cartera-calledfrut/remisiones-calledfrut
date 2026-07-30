@@ -1,10 +1,11 @@
 import os
+import json
 import base64
 from datetime import date
 from flask import Flask, render_template, request, send_file, jsonify, redirect, url_for, flash
 from supabase import create_client
 from config import PRODUCTOS
-from pdf_generator import generar_pdf
+from pdf_generator import generar_pdf, generar_pdf_proforma
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'remisiones-secret-2024')
@@ -28,10 +29,31 @@ def db_one(table, id_):
     return rows[0] if rows else None
 
 
-# ── Remisiones ────────────────────────────────────────────────────────────────
+# ── Redirects (mantiene URLs anteriores funcionando) ──────────────────────────
 
 @app.route('/')
-def index():
+def root():
+    return redirect(url_for('remisiones_hub'))
+
+@app.route('/historial')
+def historial_redirect():
+    return redirect(url_for('remisiones_historial'))
+
+
+# ── Remisiones ────────────────────────────────────────────────────────────────
+
+@app.route('/remisiones')
+def remisiones_hub():
+    try:
+        ultima = _sb.table('remisiones').select('numero').order('id', desc=True).limit(1).execute().data
+        ultima_remision = ultima[0]['numero'] if ultima else None
+    except Exception:
+        ultima_remision = None
+    return render_template('remisiones_hub.html', ultima_remision=ultima_remision)
+
+
+@app.route('/remisiones/nueva')
+def remisiones_nueva():
     try:
         empresas = db_empresas()
         clientes = db_clientes()
@@ -116,10 +138,10 @@ def generar():
                      mimetype='application/pdf')
 
 
-@app.route('/historial')
-def historial():
+@app.route('/remisiones/historial')
+def remisiones_historial():
     try:
-        rows = _sb.table('remisiones').select('*').order('id', desc=True).execute().data
+        rows     = _sb.table('remisiones').select('*').order('id', desc=True).execute().data
         empresas = {e['id']: e['nombre'] for e in db_empresas()}
     except Exception as e:
         return f'Error: {e}', 500
@@ -147,6 +169,213 @@ def descargar_pdf(rid):
         return f'Error PDF: {e}', 500
     return send_file(pdf, as_attachment=True,
                      download_name=f'remision_{r["numero"]}.pdf',
+                     mimetype='application/pdf')
+
+
+# ── Proformas ─────────────────────────────────────────────────────────────────
+
+@app.route('/proformas')
+def proformas_hub():
+    try:
+        ultima = _sb.table('proformas').select('numero').order('id', desc=True).limit(1).execute().data
+        ultima_proforma = ultima[0]['numero'] if ultima else None
+    except Exception:
+        ultima_proforma = None
+    return render_template('proformas_hub.html', ultima_proforma=ultima_proforma)
+
+
+@app.route('/proformas/nueva')
+def proformas_nueva():
+    try:
+        empresas = db_empresas()
+    except Exception as e:
+        return f'Error cargando datos: {e}', 500
+    return render_template('proforma_form.html', empresas=empresas, hoy=date.today().isoformat())
+
+
+@app.route('/proformas/generar', methods=['POST'])
+def proformas_generar():
+    empresa_id = request.form.get('empresa_id', '').strip()
+    fecha      = request.form.get('fecha', date.today().isoformat())
+    items_json = request.form.get('items_json', '[]')
+
+    try:
+        empresa = db_one('empresas', int(empresa_id))
+    except Exception as e:
+        return f'Error cargando empresa: {e}', 400
+
+    if not empresa:
+        return 'Selecciona una empresa', 400
+
+    try:
+        items = json.loads(items_json)
+    except Exception:
+        return 'Error en los ítems: JSON inválido', 400
+
+    if not items:
+        return 'Agrega al menos un ítem', 400
+
+    def fv(name, default=''):
+        return request.form.get(name, default).strip()
+
+    try:
+        flete     = float(request.form.get('flete',     0) or 0)
+        seguro    = float(request.form.get('seguro',    0) or 0)
+        descuento = float(request.form.get('descuento', 0) or 0)
+        anticipo  = int(request.form.get('anticipo_pct', 0) or 0)
+    except ValueError:
+        flete = seguro = descuento = 0
+        anticipo = 0
+
+    try:
+        row = _sb.table('proformas').insert({
+            'empresa_id':          empresa['id'],
+            'comprador_nombre':    fv('comprador_nombre'),
+            'comprador_tax_id':    fv('comprador_tax_id'),
+            'comprador_direccion': fv('comprador_direccion'),
+            'comprador_ciudad':    fv('comprador_ciudad'),
+            'comprador_pais':      fv('comprador_pais'),
+            'comprador_contacto':  fv('comprador_contacto'),
+            'fecha':               fecha,
+            'fecha_validez':       fv('fecha_validez') or None,
+            'referencia':          fv('referencia'),
+            'incoterm':            fv('incoterm', 'FOB'),
+            'puerto_origen':       fv('puerto_origen'),
+            'puerto_destino':      fv('puerto_destino'),
+            'pais_origen':         fv('pais_origen', 'Colombia'),
+            'pais_destino':        fv('pais_destino'),
+            'moneda':              fv('moneda', 'USD'),
+            'plazo_entrega':       fv('plazo_entrega'),
+            'forma_pago':          fv('forma_pago'),
+            'anticipo_pct':        anticipo,
+            'banco_nombre':        fv('banco_nombre'),
+            'banco_swift':         fv('banco_swift'),
+            'banco_cuenta':        fv('banco_cuenta'),
+            'banco_beneficiario':  fv('banco_beneficiario'),
+            'items':               items,
+            'flete':               flete,
+            'seguro':              seguro,
+            'descuento':           descuento,
+            'observaciones':       fv('observaciones'),
+        }).execute().data[0]
+    except Exception as e:
+        return f'Error Supabase: {e}', 500
+
+    numero   = 'PF-' + str(row['id']).zfill(4)
+    subtotal = sum(float(i.get('cantidad', 0)) * float(i.get('precio_unitario', 0)) for i in items)
+    total    = subtotal + flete + seguro - descuento
+
+    _sb.table('proformas').update({'numero': numero}).eq('id', row['id']).execute()
+
+    try:
+        pdf = generar_pdf_proforma({
+            'numero':        numero,
+            'fecha':         fecha,
+            'fecha_validez': fv('fecha_validez'),
+            'referencia':    fv('referencia'),
+            'empresa':       empresa,
+            'comprador': {
+                'nombre':    fv('comprador_nombre'),
+                'tax_id':    fv('comprador_tax_id'),
+                'direccion': fv('comprador_direccion'),
+                'ciudad':    fv('comprador_ciudad'),
+                'pais':      fv('comprador_pais'),
+                'contacto':  fv('comprador_contacto'),
+            },
+            'incoterm':      fv('incoterm', 'FOB'),
+            'puerto_origen': fv('puerto_origen'),
+            'puerto_destino':fv('puerto_destino'),
+            'pais_origen':   fv('pais_origen', 'Colombia'),
+            'pais_destino':  fv('pais_destino'),
+            'moneda':        fv('moneda', 'USD'),
+            'plazo_entrega': fv('plazo_entrega'),
+            'items':         items,
+            'subtotal':      subtotal,
+            'flete':         flete,
+            'seguro':        seguro,
+            'descuento':     descuento,
+            'total':         total,
+            'forma_pago':    fv('forma_pago'),
+            'anticipo_pct':  anticipo,
+            'banco': {
+                'nombre':       fv('banco_nombre'),
+                'swift':        fv('banco_swift'),
+                'cuenta':       fv('banco_cuenta'),
+                'beneficiario': fv('banco_beneficiario'),
+            },
+            'observaciones': fv('observaciones'),
+        })
+    except Exception as e:
+        return f'Error PDF: {e}', 500
+
+    return send_file(pdf, as_attachment=True,
+                     download_name=f'proforma_{numero}.pdf',
+                     mimetype='application/pdf')
+
+
+@app.route('/proformas/historial')
+def proformas_historial():
+    try:
+        rows     = _sb.table('proformas').select('*').order('id', desc=True).execute().data
+        empresas = {e['id']: e['nombre'] for e in db_empresas()}
+    except Exception as e:
+        return f'Error: {e}', 500
+    return render_template('proformas_historial.html', proformas=rows, empresas=empresas)
+
+
+@app.route('/proforma/<int:pid>/pdf')
+def descargar_pdf_proforma(pid):
+    p = db_one('proformas', pid)
+    if not p:
+        return 'No encontrada', 404
+    empresa  = db_one('empresas', p['empresa_id']) if p.get('empresa_id') else {}
+    items    = p['items']
+    subtotal = sum(float(i.get('cantidad', 0)) * float(i.get('precio_unitario', 0)) for i in items)
+    total    = subtotal + float(p.get('flete', 0)) + float(p.get('seguro', 0)) - float(p.get('descuento', 0))
+
+    try:
+        pdf = generar_pdf_proforma({
+            'numero':        p['numero'],
+            'fecha':         p['fecha'],
+            'fecha_validez': p.get('fecha_validez', ''),
+            'referencia':    p.get('referencia', ''),
+            'empresa':       empresa or {},
+            'comprador': {
+                'nombre':    p.get('comprador_nombre', ''),
+                'tax_id':    p.get('comprador_tax_id', ''),
+                'direccion': p.get('comprador_direccion', ''),
+                'ciudad':    p.get('comprador_ciudad', ''),
+                'pais':      p.get('comprador_pais', ''),
+                'contacto':  p.get('comprador_contacto', ''),
+            },
+            'incoterm':      p.get('incoterm', ''),
+            'puerto_origen': p.get('puerto_origen', ''),
+            'puerto_destino':p.get('puerto_destino', ''),
+            'pais_origen':   p.get('pais_origen', 'Colombia'),
+            'pais_destino':  p.get('pais_destino', ''),
+            'moneda':        p.get('moneda', 'USD'),
+            'plazo_entrega': p.get('plazo_entrega', ''),
+            'items':         items,
+            'subtotal':      subtotal,
+            'flete':         float(p.get('flete', 0)),
+            'seguro':        float(p.get('seguro', 0)),
+            'descuento':     float(p.get('descuento', 0)),
+            'total':         total,
+            'forma_pago':    p.get('forma_pago', ''),
+            'anticipo_pct':  p.get('anticipo_pct', 0),
+            'banco': {
+                'nombre':       p.get('banco_nombre', ''),
+                'swift':        p.get('banco_swift', ''),
+                'cuenta':       p.get('banco_cuenta', ''),
+                'beneficiario': p.get('banco_beneficiario', ''),
+            },
+            'observaciones': p.get('observaciones', ''),
+        })
+    except Exception as e:
+        return f'Error PDF: {e}', 500
+
+    return send_file(pdf, as_attachment=True,
+                     download_name=f'proforma_{p["numero"]}.pdf',
                      mimetype='application/pdf')
 
 

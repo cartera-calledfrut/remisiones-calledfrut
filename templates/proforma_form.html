@@ -81,4 +81,262 @@
     <div class="card-header fw-bold">CONDICIONES COMERCIALES</div>
     <div class="card-body">
       <div class="row g-3">
-        <div class=
+        <div class="col-md-2">
+          <label class="form-label">INCOTERM <span class="text-danger">*</span></label>
+          <select name="incoterm" class="form-select" required>
+            {% for term in ['EXW','FCA','FAS','FOB','CFR','CIF','CPT','CIP','DAP','DPU','DDP'] %}
+            <option value="{{ term }}" {% if term == 'FOB' %}selected{% endif %}>{{ term }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Puerto / Lugar de embarque <span class="text-danger">*</span></label>
+          <input type="text" name="puerto_origen" class="form-control" placeholder="Ej: Buenaventura, Colombia" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Puerto / Lugar de destino</label>
+          <input type="text" name="puerto_destino" class="form-control" placeholder="Ej: Miami, USA">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Moneda</label>
+          <select name="moneda" class="form-select">
+            <option value="USD" selected>USD</option>
+            <option value="EUR">EUR</option>
+            <option value="COP">COP</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">País de origen</label>
+          <input type="text" name="pais_origen" class="form-control" value="Colombia">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">País de destino</label>
+          <input type="text" name="pais_destino" class="form-control">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Plazo de entrega estimado</label>
+          <input type="text" name="plazo_entrega" class="form-control" placeholder="Ej: 15 días hábiles">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. MERCANCÍA -->
+  <div class="card mb-3">
+    <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+      <span>MERCANCÍA</span>
+      <button type="button" class="btn btn-sm btn-outline-primary" id="add-item">+ Agregar ítem</button>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-bordered align-middle mb-0 small" id="items-table">
+          <thead class="table-dark">
+            <tr>
+              <th>Descripción</th>
+              <th style="width:110px">HS Code</th>
+              <th style="width:85px">Cantidad</th>
+              <th style="width:75px">Unidad</th>
+              <th style="width:105px">Precio unit.</th>
+              <th style="width:85px">Peso neto</th>
+              <th style="width:85px">Peso bruto</th>
+              <th style="width:65px">Bultos</th>
+              <th style="width:36px"></th>
+            </tr>
+          </thead>
+          <tbody id="items-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. TOTALES -->
+  <div class="card mb-3">
+    <div class="card-header fw-bold">TOTALES</div>
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label text-muted small">Subtotal (calculado)</label>
+          <input type="text" id="subtotal-display" class="form-control bg-light" readonly>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Flete</label>
+          <input type="number" name="flete" id="flete" class="form-control" value="0" min="0" step="0.01">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Seguro</label>
+          <input type="number" name="seguro" id="seguro" class="form-control" value="0" min="0" step="0.01">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Descuento (−)</label>
+          <input type="number" name="descuento" id="descuento" class="form-control" value="0" min="0" step="0.01">
+        </div>
+        <div class="col-md-3 offset-md-9">
+          <label class="form-label fw-bold">TOTAL</label>
+          <input type="text" id="total-display" class="form-control fw-bold bg-light" readonly>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. CONDICIONES DE PAGO -->
+  <div class="card mb-3">
+    <div class="card-header fw-bold">CONDICIONES DE PAGO</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-5">
+          <label class="form-label">Forma de pago</label>
+          <input type="text" name="forma_pago" class="form-control" placeholder="Ej: T/T, L/C at sight">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Anticipo %</label>
+          <input type="number" name="anticipo_pct" class="form-control" value="0" min="0" max="100">
+        </div>
+        <div class="col-md-5">
+          <label class="form-label">Banco</label>
+          <input type="text" name="banco_nombre" class="form-control">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">SWIFT / BIC</label>
+          <input type="text" name="banco_swift" class="form-control">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Número de cuenta</label>
+          <input type="text" name="banco_cuenta" class="form-control">
+        </div>
+        <div class="col-md-5">
+          <label class="form-label">Beneficiario</label>
+          <input type="text" name="banco_beneficiario" class="form-control">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. OBSERVACIONES -->
+  <div class="card mb-4">
+    <div class="card-header fw-bold">OBSERVACIONES <span class="text-muted fw-normal small">(opcional)</span></div>
+    <div class="card-body">
+      <textarea name="observaciones" class="form-control" rows="3"
+                placeholder="Notas adicionales, condiciones especiales, etc."></textarea>
+    </div>
+  </div>
+
+  <input type="hidden" name="items_json" id="items-json">
+  <div id="alert-box" class="alert alert-danger d-none mb-3"></div>
+
+  <div class="d-grid mb-5">
+    <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">Generar PDF</button>
+  </div>
+
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function newRow() {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" class="form-control form-control-sm item-desc" placeholder="Descripción de la mercancía"></td>
+    <td><input type="text" class="form-control form-control-sm item-hs" placeholder="0000.00.00"></td>
+    <td><input type="number" class="form-control form-control-sm item-qty" value="0" min="0" step="0.001"></td>
+    <td><input type="text" class="form-control form-control-sm item-unit" value="KG"></td>
+    <td><input type="number" class="form-control form-control-sm item-price" value="0" min="0" step="0.01"></td>
+    <td><input type="number" class="form-control form-control-sm item-pneto" value="0" min="0" step="0.001"></td>
+    <td><input type="number" class="form-control form-control-sm item-pbruto" value="0" min="0" step="0.001"></td>
+    <td><input type="number" class="form-control form-control-sm item-bultos" value="0" min="0" step="1"></td>
+    <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-row" title="Eliminar">×</button></td>
+  `;
+  tr.querySelectorAll('input').forEach(inp => inp.addEventListener('input', calcTotals));
+  tr.querySelector('.remove-row').addEventListener('click', () => { tr.remove(); calcTotals(); });
+  return tr;
+}
+
+const tbody = document.getElementById('items-body');
+
+document.getElementById('add-item').addEventListener('click', () => {
+  tbody.appendChild(newRow());
+  calcTotals();
+});
+
+tbody.appendChild(newRow());
+
+function calcTotals() {
+  let subtotal = 0;
+  tbody.querySelectorAll('tr').forEach(tr => {
+    const qty   = parseFloat(tr.querySelector('.item-qty')?.value   || 0);
+    const price = parseFloat(tr.querySelector('.item-price')?.value || 0);
+    subtotal += qty * price;
+  });
+  const flete    = parseFloat(document.getElementById('flete').value    || 0);
+  const seguro   = parseFloat(document.getElementById('seguro').value   || 0);
+  const descuento= parseFloat(document.getElementById('descuento').value|| 0);
+  const total    = subtotal + flete + seguro - descuento;
+  document.getElementById('subtotal-display').value = subtotal.toFixed(2);
+  document.getElementById('total-display').value    = total.toFixed(2);
+}
+
+['flete','seguro','descuento'].forEach(id =>
+  document.getElementById(id).addEventListener('input', calcTotals)
+);
+calcTotals();
+
+document.getElementById('proforma-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const alertBox = document.getElementById('alert-box');
+  alertBox.classList.add('d-none');
+
+  const items = [];
+  tbody.querySelectorAll('tr').forEach(tr => {
+    const desc = tr.querySelector('.item-desc').value.trim();
+    if (!desc) return;
+    items.push({
+      descripcion:     desc,
+      hs_code:         tr.querySelector('.item-hs').value.trim(),
+      cantidad:        parseFloat(tr.querySelector('.item-qty').value   || 0),
+      unidad:          tr.querySelector('.item-unit').value.trim() || 'KG',
+      precio_unitario: parseFloat(tr.querySelector('.item-price').value || 0),
+      peso_neto:       parseFloat(tr.querySelector('.item-pneto').value || 0),
+      peso_bruto:      parseFloat(tr.querySelector('.item-pbruto').value|| 0),
+      num_bultos:      parseInt(tr.querySelector('.item-bultos').value   || 0),
+    });
+  });
+
+  if (items.length === 0) {
+    alertBox.textContent = 'Agrega al menos un ítem con descripción.';
+    alertBox.classList.remove('d-none');
+    return;
+  }
+
+  document.getElementById('items-json').value = JSON.stringify(items);
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Generando...';
+
+  try {
+    const res = await fetch('/proformas/generar', {
+      method: 'POST',
+      body: new FormData(e.target),
+    });
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(txt);
+    }
+    const blob = await res.blob();
+    const cd   = res.headers.get('Content-Disposition') || '';
+    const match= cd.match(/filename="?([^"]+)"?/);
+    const filename = match ? match[1] : 'proforma.pdf';
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alertBox.textContent = 'Error: ' + err.message;
+    alertBox.classList.remove('d-none');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Generar PDF';
+  }
+});
+</script>
+{% endblock %}

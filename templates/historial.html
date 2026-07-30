@@ -4,7 +4,10 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h4 class="fw-bold mb-0">Historial de Remisiones</h4>
-  <a href="/" class="btn btn-primary">+ Nueva remisión</a>
+  <div class="d-flex gap-2">
+    <a href="/remisiones" class="btn btn-outline-secondary btn-sm">Volver</a>
+    <a href="/remisiones/nueva" class="btn btn-primary btn-sm">+ Nueva remisión</a>
+  </div>
 </div>
 
 {% if remisiones %}
@@ -49,7 +52,7 @@
 {% else %}
 <div class="text-center text-muted py-5">
   <p class="fs-5">Aún no hay remisiones registradas.</p>
-  <a href="/" class="btn btn-primary">Crear la primera</a>
+  <a href="/remisiones/nueva" class="btn btn-primary">Crear la primera</a>
 </div>
 {% endif %}
 {% endblock %}

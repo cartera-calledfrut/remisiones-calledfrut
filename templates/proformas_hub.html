@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Proformas{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+  <h4 class="fw-bold">Proformas de Exportación</h4>
+  {% if ultima_proforma %}
+  <p class="text-muted mb-0">Última proforma: <strong>{{ ultima_proforma }}</strong></p>
+  {% endif %}
+</div>
+
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body d-flex flex-column align-items-start p-4">
+        <h5 class="card-title fw-bold mb-2">Nueva Proforma</h5>
+        <p class="card-text text-muted mb-4">Genera una proforma de exportación con INCOTERM, HS Codes y condiciones de pago.</p>
+        <a href="/proformas/nueva" class="btn btn-primary mt-auto">Crear proforma</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body d-flex flex-column align-items-start p-4">
+        <h5 class="card-title fw-bold mb-2">Historial</h5>
+        <p class="card-text text-muted mb-4">Consulta y descarga proformas anteriores.</p>
+        <a href="/proformas/historial" class="btn btn-outline-secondary mt-auto">Ver historial</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

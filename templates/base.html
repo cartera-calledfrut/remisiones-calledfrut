@@ -3,23 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Remisiones{% endblock %} — Called Frut</title>
+  <title>{% block title %}Called Frut{% endblock %} — Called Frut</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
   <nav class="navbar navbar-dark navbar-expand-lg">
     <div class="container-fluid px-4">
-      <span class="navbar-brand fw-bold">Called Frut · Remisiones</span>
+      <span class="navbar-brand fw-bold">Called Frut</span>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="nav">
         <ul class="navbar-nav ms-auto gap-1">
-          <li class="nav-item"><a href="/"               class="nav-link">Nueva remisión</a></li>
-          <li class="nav-item"><a href="/historial"       class="nav-link">Historial</a></li>
-          <li class="nav-item"><a href="/clientes"        class="nav-link">Clientes</a></li>
-          <li class="nav-item"><a href="/configuracion"   class="nav-link">Configuración</a></li>
+          <li class="nav-item"><a href="/remisiones"        class="nav-link">Remisiones</a></li>
+          <li class="nav-item"><a href="/proformas"         class="nav-link">Proformas</a></li>
+          <li class="nav-item"><a href="/clientes"          class="nav-link">Clientes</a></li>
+          <li class="nav-item"><a href="/configuracion"     class="nav-link">Configuración</a></li>
         </ul>
       </div>
     </div>

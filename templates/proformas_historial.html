@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Historial Proformas{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-bold mb-0">Historial de Proformas</h4>
+  <div class="d-flex gap-2">
+    <a href="/proformas" class="btn btn-outline-secondary btn-sm">Volver</a>
+    <a href="/proformas/nueva" class="btn btn-primary btn-sm">+ Nueva proforma</a>
+  </div>
+</div>
+
+{% if proformas %}
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>No.</th>
+        <th>Fecha</th>
+        <th>Emitida por</th>
+        <th>Comprador</th>
+        <th>País</th>
+        <th>INCOTERM</th>
+        <th>Moneda</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in proformas %}
+      <tr>
+        <td class="fw-bold text-muted">{{ p.numero }}</td>
+        <td>{{ p.fecha }}</td>
+        <td class="small">{{ empresas.get(p.empresa_id, '—') }}</td>
+        <td>{{ p.comprador_nombre }}</td>
+        <td>{{ p.comprador_pais }}</td>
+        <td><span class="badge bg-secondary">{{ p.incoterm }}</span></td>
+        <td>{{ p.moneda }}</td>
+        <td class="text-end">
+          <a href="/proforma/{{ p.id }}/pdf" class="btn btn-sm btn-outline-secondary">
+            Descargar PDF
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="text-center text-muted py-5">
+  <p class="fs-5">Aún no hay proformas registradas.</p>
+  <a href="/proformas/nueva" class="btn btn-primary">Crear la primera</a>
+</div>
+{% endif %}
+{% endblock %}

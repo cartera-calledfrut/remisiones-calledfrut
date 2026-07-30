@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Nueva Proforma{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-bold mb-0">Nueva Proforma de Exportación</h4>
+  <a href="/proformas" class="btn btn-outline-secondary btn-sm">Volver</a>
+</div>
+
+<form id="proforma-form">
+
+  <!-- 1. EMITIDA POR -->
+  <div class="card mb-3">
+    <div class="card-header fw-bold">EMITIDA POR</div>
+    <div class="card-body">
+      <select name="empresa_id" class="form-select" required>
+        <option value="">— Selecciona razón social —</option>
+        {% for e in empresas %}
+        <option value="{{ e.id }}">{{ e.nombre }} · NIT {{ e.nit }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <!-- 2. COMPRADOR -->
+  <div class="card mb-3">
+    <div class="card-header fw-bold">COMPRADOR / BUYER</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Razón social <span class="text-danger">*</span></label>
+          <input type="text" name="comprador_nombre" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Tax ID / NIT</label>
+          <input type="text" name="comprador_tax_id" class="form-control">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Dirección</label>
+          <input type="text" name="comprador_direccion" class="form-control">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Ciudad</label>
+          <input type="text" name="comprador_ciudad" class="form-control">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">País <span class="text-danger">*</span></label>
+          <input type="text" name="comprador_pais" class="form-control" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Contacto / Email</label>
+          <input type="text" name="comprador_contacto" class="form-control">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. DETALLES DEL DOCUMENTO -->
+  <div class="card mb-3">
+    <div class="card-header fw-bold">DETALLES DEL DOCUMENTO</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Fecha <span class="text-danger">*</span></label>
+          <input type="date" name="fecha" class="form-control" value="{{ hoy }}" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Válida hasta</label>
+          <input type="date" name="fecha_validez" class="form-control">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Referencia / PO#</label>
+          <input type="text" name="referencia" class="form-control" placeholder="Ej: PO-2024-001">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. CONDICIONES COMERCIALES -->
+  <div class="card mb-3">
+    <div class="card-header fw-bold">CONDICIONES COMERCIALES</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class=

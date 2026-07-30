@@ -16,7 +16,7 @@ BORDER  = colors.HexColor('#aaaaaa')
 ACCENT  = colors.HexColor('#333333')
 WHITE   = colors.white
 
-# ── Anchos de columna (total = 18 cm) ────────────────────────────────────────
+# ── Anchos de columna — remisiones (total = 18 cm) ───────────────────────────
 COL_CLIENT = [2.2*cm, 5.3*cm, 2.2*cm, 8.3*cm]
 COL_ITEMS  = [1.2*cm, 11.3*cm, 2.0*cm, 1.75*cm, 1.75*cm]
 COL_BOT    = [10*cm, 8*cm]
@@ -56,6 +56,8 @@ def _logo_image(empresa):
         return Image(local, width=3.2*cm, height=2.6*cm, kind='proportional')
     return _p('')
 
+
+# ── PDF Remisión ──────────────────────────────────────────────────────────────
 
 def generar_pdf(remision):
     buffer = io.BytesIO()
@@ -130,7 +132,6 @@ def generar_pdf(remision):
     elements.append(Spacer(1, 0.3*cm))
 
     # ── TABLA DE ÍTEMS ────────────────────────────────────────────────────────
-    hdr_style = _s(8, bold=True, align=TA_CENTER, color=WHITE)
     def hdr(t, align=TA_CENTER): return Paragraph(t, _s(8, bold=True, align=align, color=WHITE))
 
     rows = [[
@@ -178,50 +179,4 @@ def generar_pdf(remision):
         [lbl('PUNTO DE ENTREGA')],
         [_p(punto['nombre'], size=9, bold=True)],
     ]
-    observaciones = remision.get('observaciones', '').strip()
-    if observaciones:
-        obs_rows.append([lbl('OBSERVACIONES')])
-        obs_rows.append([_p(observaciones, size=8.5)])
-
-    obs_t = _tbl(
-        obs_rows,
-        [10*cm],
-        [('BOX', (0,0), (-1,-1), 1, BORDER),
-         ('BACKGROUND', (0,0), (-1,0), LGRAY),
-         ('BACKGROUND', (0,2), (-1,2), LGRAY)],
-    )
-    tot_t = _tbl(
-        [[_p('Total Bruto',   bold=True, size=8.5), _p('0.00', align=TA_RIGHT, size=8.5)],
-         [_p('Total a Pagar', bold=True, size=8.5), _p('0.00', align=TA_RIGHT, size=8.5)]],
-        COL_TOT,
-        [('BOX',       (0,0), (-1,-1), 1,    BORDER),
-         ('INNERGRID', (0,0), (-1,-1), 0.25, BORDER),
-         ('ALIGN',     (1,0), (1,-1),  'RIGHT'),
-         ('BACKGROUND',(0,1), (0,1),   LGRAY)],
-    )
-    bottom = Table([[obs_t, tot_t]], colWidths=COL_BOT)
-    bottom.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'TOP'),
-                                ('RIGHTPADDING',(0,0),(0,-1),8)]))
-    elements.append(bottom)
-
-    elements.append(Spacer(1, 2*cm))
-
-    # ── FIRMAS ────────────────────────────────────────────────────────────────
-    line = colors.HexColor('#aaaaaa')
-    sig = Table(
-        [[_p('Entregado por:', size=8, color=GRAY), _p(''),
-          _p('Recibido por:',  size=8, color=GRAY), _p('')]],
-        colWidths=[2.5*cm, 6.5*cm, 2.5*cm, 6.5*cm],
-    )
-    sig.setStyle(TableStyle([
-        ('VALIGN',         (0,0), (-1,-1), 'BOTTOM'),
-        ('LINEBELOW',      (1,0), (1,0),   0.75, line),
-        ('LINEBELOW',      (3,0), (3,0),   0.75, line),
-        ('TOPPADDING',     (0,0), (-1,-1), 14),
-        ('BOTTOMPADDING',  (0,0), (-1,-1), 2),
-    ]))
-    elements.append(sig)
-
-    doc.build(elements)
-    buffer.seek(0)
-    return buffer
+    observaciones

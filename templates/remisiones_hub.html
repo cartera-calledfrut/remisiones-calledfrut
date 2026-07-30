@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Remisiones{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+  <h4 class="fw-bold">Remisiones</h4>
+  {% if ultima_remision %}
+  <p class="text-muted mb-0">Última remisión: <strong>{{ ultima_remision }}</strong></p>
+  {% endif %}
+</div>
+
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body d-flex flex-column align-items-start p-4">
+        <h5 class="card-title fw-bold mb-2">Nueva Remisión</h5>
+        <p class="card-text text-muted mb-4">Genera una remisión de despacho para un cliente.</p>
+        <a href="/remisiones/nueva" class="btn btn-primary mt-auto">Crear remisión</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body d-flex flex-column align-items-start p-4">
+        <h5 class="card-title fw-bold mb-2">Historial</h5>
+        <p class="card-text text-muted mb-4">Consulta y descarga remisiones anteriores.</p>
+        <a href="/remisiones/historial" class="btn btn-outline-secondary mt-auto">Ver historial</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
